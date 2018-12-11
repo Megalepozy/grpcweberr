@@ -43,6 +43,9 @@ func TestNew(t *testing.T) {
 			Convey("Proper err.Error()", func() {
 				So(err.Error(), ShouldEqual, "rpc error: code = Aborted desc = "+errorID)
 			})
+			Convey("Getting of errorID", func() {
+				So(GetErrorID(err), ShouldEqual, errorID)
+			})
 			Convey("Getting of http status", func() {
 				So(GetHTTPStatus(err), ShouldEqual, httpStatus)
 			})

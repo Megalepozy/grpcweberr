@@ -16,6 +16,7 @@ func New(errorID string, grpcCode codes.Code, httpCode int, userErrorMessage str
 	st := status.New(grpcCode, errorID)
 
 	br := &errdetails.BadRequest{}
+	addErrorID(errorID, br)
 	addHTTPStatusCode(httpCode, br)
 	addUserErrorMessage(userErrorMessage, br)
 
@@ -35,6 +36,10 @@ func AddLogTracingID(err error) error {
 	}
 
 	return err
+}
+
+func GetErrorID(err error) string {
+	return getFieldViolationValue(err, "errorID")
 }
 
 func GetHTTPStatus(err error) int {
@@ -62,6 +67,10 @@ func IsGotTracingID(err error) bool {
 	}
 
 	return false
+}
+
+func addErrorID(errorID string, br *errdetails.BadRequest) {
+	appendFieldViolation(br, "errorID", errorID)
 }
 
 func addHTTPStatusCode(httpCode int, br *errdetails.BadRequest) {
