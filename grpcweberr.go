@@ -5,32 +5,28 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/google/uuid"
-
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func New(errorID string, grpcCode codes.Code, httpCode int, userErrorMessage string) error {
-	st := status.New(grpcCode, errorID)
+func New(id string, code codes.Code, http int, msg string) error {
+	st := status.New(code, id)
 
 	br := &errdetails.BadRequest{}
-	addErrorID(errorID, br)
-	addHTTPStatusCode(httpCode, br)
-	addUserErrorMessage(userErrorMessage, br)
+	addErrorID(id, br)
+	addHTTPStatusCode(http, br)
+	addUserErrorMessage(msg, br)
 
 	return attachDetails(st, br).Err()
 }
 
-func AddLogTracingID(err error) error {
-	logTracingID := uuid.New()
-
+func AddLogTracingID(logTracingID string, err error) error {
 	st := status.Convert(err)
 	for _, detail := range st.Details() {
 		switch t := detail.(type) {
 		case *errdetails.BadRequest:
-			appendFieldViolation(t, "logTracingID", logTracingID.String())
+			appendFieldViolation(t, "logTracingID", logTracingID)
 			return attachDetails(st, t).Err()
 		}
 	}
@@ -58,15 +54,6 @@ func GetUserErrorMessage(err error) string {
 
 func GetLogTracingID(err error) string {
 	return getFieldViolationValue(err, "logTracingID")
-}
-
-func IsGotTracingID(err error) bool {
-	logTracingID := getFieldViolationValue(err, "logTracingID")
-	if logTracingID != "" {
-		return true
-	}
-
-	return false
 }
 
 func addErrorID(errorID string, br *errdetails.BadRequest) {
