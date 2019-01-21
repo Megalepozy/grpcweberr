@@ -10,6 +10,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// New create a new error where the returned error is a simple error object (avoid later type inference)
+//
+// id string - just a string to easily identify which error occured
+// code codes.Code - grpc status code, import "google.golang.org/grpc/codes"
+// http int - the intended http status code to return
+// msg string - intended message returned to client, get default msg if empty
 func New(id string, code codes.Code, http int, msg string) error {
 	st := status.New(code, id)
 
@@ -21,6 +27,7 @@ func New(id string, code codes.Code, http int, msg string) error {
 	return attachDetails(st, br).Err()
 }
 
+// AddLogTracingID append logTracingID value to the error
 func AddLogTracingID(logTracingID string, err error) error {
 	st := status.Convert(err)
 	for _, detail := range st.Details() {
@@ -34,10 +41,12 @@ func AddLogTracingID(logTracingID string, err error) error {
 	return err
 }
 
+// GetErrorID is a getter for the id value which was supplied at New(...)
 func GetErrorID(err error) string {
 	return getFieldViolationValue(err, "errorID")
 }
 
+// GetHTTPStatus is a getter for the http value which was supplied at New(...)
 func GetHTTPStatus(err error) int {
 	code := getFieldViolationValue(err, "httpStatus")
 	if code != "" {
@@ -48,10 +57,12 @@ func GetHTTPStatus(err error) int {
 	return 500
 }
 
+// GetUserErrorMessage is a getter for the msg value which was supplied at New(...)
 func GetUserErrorMessage(err error) string {
 	return getFieldViolationValue(err, "userErrorMessage")
 }
 
+// GetLogTracingID is a getter for logTracingId
 func GetLogTracingID(err error) string {
 	return getFieldViolationValue(err, "logTracingID")
 }
