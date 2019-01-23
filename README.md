@@ -37,6 +37,6 @@ Later at specific points where u may want to log an error u can do:
 ```go
 if logID := grpcweberr.GetLogTracingID(err); logID != "" {
     // some logging code... here I use sdlog but its up to u
-    sdlog.Logger.Info("Error from X service", sdlog.AddLogTracingID(logID), sdlog.Lbl("err", err))
+    sdlog.New().Info("Error of Info lvl from X service", sdlog.AddLogTracingID(logID), sdlog.Lbl("err", err))
 }
 ```
