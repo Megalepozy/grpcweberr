@@ -11,7 +11,6 @@ import (
 
 func TestNew(t *testing.T) {
 	Convey("Setup of valid values for error creation", t, func() {
-		id := "short unique err description"
 		code := codes.Aborted
 		httpStatus := http.StatusBadRequest
 		msg := "Oh no, something really bad happened"
@@ -20,7 +19,7 @@ func TestNew(t *testing.T) {
 			expectedHTTPStatus := http.StatusInternalServerError
 			httpStatus = 823764
 
-			err := New(id, code, httpStatus, msg)
+			err := New(code, httpStatus, msg)
 
 			So(err, ShouldNotBeNil)
 			So(GetHTTPStatus(err), ShouldEqual, expectedHTTPStatus)
@@ -30,22 +29,19 @@ func TestNew(t *testing.T) {
 			expectedUserErrorMessage := "An unexpected error has occurred, please try again later"
 			msg = ""
 
-			err := New(id, code, httpStatus, msg)
+			err := New(code, httpStatus, msg)
 
 			So(err, ShouldNotBeNil)
 			So(GetUserErrorMessage(err), ShouldEqual, expectedUserErrorMessage)
 		})
 
 		Convey("Creation of error with valid values", func() {
-			err := New(id, code, httpStatus, msg)
+			err := New(code, httpStatus, msg)
 
 			So(err, ShouldNotBeNil)
 
 			Convey("Proper err.Error()", func() {
-				So(err.Error(), ShouldEqual, "rpc error: code = Aborted desc = "+id)
-			})
-			Convey("Getting of id", func() {
-				So(GetErrorID(err), ShouldEqual, id)
+				So(err.Error(), ShouldEqual, "rpc error: code = Aborted desc = "+msg)
 			})
 			Convey("Getting of http status", func() {
 				So(GetHTTPStatus(err), ShouldEqual, httpStatus)

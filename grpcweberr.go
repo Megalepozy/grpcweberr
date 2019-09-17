@@ -12,16 +12,18 @@ import (
 
 // New create a new error where the returned error is a simple error object (avoid later type inference)
 //
-// id string - just a string to easily identify which error occured
-// code codes.Code - grpc status code, import "google.golang.org/grpc/codes"
-// http int - the intended http status code to return
+// grpcStatusCode codes.Code - import "google.golang.org/grpc/codes"
+// httpStatusCode int - http status code to return
 // msg string - intended message returned to client, get default msg if empty
-func New(id string, code codes.Code, http int, msg string) error {
-	st := status.New(code, id)
+func New(grpcStatusCode codes.Code, httpStatusCode int, msg string) error {
+	if msg == "" {
+		msg = "An unexpected error has occurred, please try again later"
+	}
+
+	st := status.New(grpcStatusCode, msg)
 
 	br := &errdetails.BadRequest{}
-	addErrorID(id, br)
-	addHTTPStatusCode(http, br)
+	addHTTPStatusCode(httpStatusCode, br)
 	addUserErrorMessage(msg, br)
 
 	return attachDetails(st, br).Err()
@@ -39,11 +41,6 @@ func AddLogTracingID(logTracingID string, err error) error {
 	}
 
 	return err
-}
-
-// GetErrorID is a getter for the id value which was supplied at New(...)
-func GetErrorID(err error) string {
-	return getFieldViolationValue(err, "errorID")
 }
 
 // GetHTTPStatus is a getter for the http value which was supplied at New(...)
@@ -67,21 +64,13 @@ func GetLogTracingID(err error) string {
 	return getFieldViolationValue(err, "logTracingID")
 }
 
-func addErrorID(errorID string, br *errdetails.BadRequest) {
-	appendFieldViolation(br, "errorID", errorID)
-}
-
-func addHTTPStatusCode(httpCode int, br *errdetails.BadRequest) {
-	if http.StatusText(httpCode) != "" {
-		appendFieldViolation(br, "httpStatus", strconv.Itoa(httpCode))
+func addHTTPStatusCode(httpStatusCode int, br *errdetails.BadRequest) {
+	if http.StatusText(httpStatusCode) != "" {
+		appendFieldViolation(br, "httpStatus", strconv.Itoa(httpStatusCode))
 	}
 }
 
 func addUserErrorMessage(userErrorMessage string, br *errdetails.BadRequest) {
-	if userErrorMessage == "" {
-		userErrorMessage = "An unexpected error has occurred, please try again later"
-	}
-
 	appendFieldViolation(br, "userErrorMessage", userErrorMessage)
 }
 
