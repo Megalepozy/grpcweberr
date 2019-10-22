@@ -10,27 +10,35 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// New create a new error where the returned error is a simple error object (avoid later type inference)
+// GRPCWebErr serve as a receiver in order to allow mocking
+type GRPCWebErr struct{}
+
+// New is a factory method for GRPCWebErr struct
+func New() *GRPCWebErr {
+	return &GRPCWebErr{}
+}
+
+// New (with a receiver pointer) create a new error with embedded data of status codes and message
 //
 // grpcStatusCode codes.Code - import "google.golang.org/grpc/codes"
 // httpStatusCode int - http status code to return
-// msg string - intended message returned to client, get default msg if empty
-func New(grpcStatusCode codes.Code, httpStatusCode int, msg string) error {
-	if msg == "" {
-		msg = "An unexpected error has occurred, please try again later"
+// messageToUser string - intended message returned to client, get default msg if empty
+func (*GRPCWebErr) New(grpcStatusCode codes.Code, httpStatusCode int, messageToUser string) error {
+	if messageToUser == "" {
+		messageToUser = "An unexpected error has occurred, please try again later"
 	}
 
-	st := status.New(grpcStatusCode, msg)
+	st := status.New(grpcStatusCode, messageToUser)
 
 	br := &errdetails.BadRequest{}
 	addHTTPStatusCode(httpStatusCode, br)
-	addUserErrorMessage(msg, br)
+	addMessageToUser(messageToUser, br)
 
 	return attachDetails(st, br).Err()
 }
 
-// AddLogTracingID append logTracingID value to the error
-func AddLogTracingID(logTracingID string, err error) error {
+// AddLogTracingID append logTracingID value to the error so it could be tracked as it flow through the services
+func (*GRPCWebErr) AddLogTracingID(logTracingID string, err error) error {
 	st := status.Convert(err)
 	for _, detail := range st.Details() {
 		switch t := detail.(type) {
@@ -44,7 +52,7 @@ func AddLogTracingID(logTracingID string, err error) error {
 }
 
 // GetHTTPStatus is a getter for the http value which was supplied at New(...)
-func GetHTTPStatus(err error) int {
+func (*GRPCWebErr) GetHTTPStatus(err error) int {
 	code := getFieldViolationValue(err, "httpStatus")
 	if code != "" {
 		code, _ := strconv.Atoi(code)
@@ -54,13 +62,13 @@ func GetHTTPStatus(err error) int {
 	return 500
 }
 
-// GetUserErrorMessage is a getter for the msg value which was supplied at New(...)
-func GetUserErrorMessage(err error) string {
-	return getFieldViolationValue(err, "userErrorMessage")
+// GetMessageToUser is a getter for the messageToUser which was supplied at New(...)
+func (*GRPCWebErr) GetMessageToUser(err error) string {
+	return getFieldViolationValue(err, "messageToUser")
 }
 
 // GetLogTracingID is a getter for logTracingId
-func GetLogTracingID(err error) string {
+func (*GRPCWebErr) GetLogTracingID(err error) string {
 	return getFieldViolationValue(err, "logTracingID")
 }
 
@@ -70,8 +78,8 @@ func addHTTPStatusCode(httpStatusCode int, br *errdetails.BadRequest) {
 	}
 }
 
-func addUserErrorMessage(userErrorMessage string, br *errdetails.BadRequest) {
-	appendFieldViolation(br, "userErrorMessage", userErrorMessage)
+func addMessageToUser(messageToUser string, br *errdetails.BadRequest) {
+	appendFieldViolation(br, "messageToUser", messageToUser)
 }
 
 func appendFieldViolation(br *errdetails.BadRequest, name string, value string) *errdetails.BadRequest {
