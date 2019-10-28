@@ -7,7 +7,7 @@ The first step is where an error is created:
 
 ```go
 if 1 != 0 {
-	gwe := grpcweberr.New()
+    gwe := grpcweberr.New()
     return gwe.New(codes.InvalidArgument, 422, "Received invalid values")
 }
 ```
@@ -25,7 +25,7 @@ There is also a way to track and log specific errors which travel through the mi
 logTracingID to the error:
 ```go
 if 1 != 0 {
-	gwe := grpcweberr.New()
+    gwe := grpcweberr.New()
     err := gwe.New(codes.InvalidArgument, 422, "Received invalid values")
     return gwe.AddLogTracingID(tracingID, err)
 }
